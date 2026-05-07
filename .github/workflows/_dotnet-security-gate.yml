@@ -75,11 +75,12 @@ jobs:
             --severity=WARNING
         continue-on-error: true
 
-      - name: 📤 Upload SARIF to GitHub Security
+      - name: 📤 Upload Semgrep SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: semgrep.sarif
+          category: semgrep
         continue-on-error: true
 
   container-scan:
@@ -95,7 +96,24 @@ jobs:
       - name: 🐳 Build Docker image for scanning
         run: docker build -t ${{ inputs.service-name }}:scan -f ${{ inputs.dockerfile }} .
 
-      - name: 🔍 Run Trivy vulnerability scanner
+      - name: 🔍 Run Trivy (SARIF for Code Scanning)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ inputs.service-name }}:scan
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+
+      - name: 📤 Upload Trivy SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: trivy-container
+        continue-on-error: true
+
+      - name: 📊 Run Trivy (table summary in logs)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ inputs.service-name }}:scan
