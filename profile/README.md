@@ -23,85 +23,49 @@ A **Healsyn** é a empresa de tecnologia em saúde que constrói e mantém a pla
 
 > **Compliance:** desenvolvido em conformidade com a **LGPD** e diretrizes da CFM/Telemedicina (Resolução CFM 2.314/2022).
 
-## 🏗️ Como nos organizamos
+## 🧱 Stack & Arquitetura
 
-Toda a plataforma é construída como **microsserviços independentes**, cada um com seu próprio repositório nesta organização:
+A plataforma é construída como **microsserviços independentes**, cada um com seu próprio repositório nesta organização.
 
-| Camada | Repos |
+### Backend (.NET 10)
+| Serviço | Responsabilidade |
 |---|---|
-| **Backend (.NET 10)** | `auth-service`, `user-service`, `doctor-service`, `patient-service`, `emr-service`, `call-service`, `payment-service`, `princing-service` |
-| **Frontend** | `doutoron-app` (Ionic 8 + React 19 + Vite) |
-| **Infraestrutura** | `jitsi-private`, `RabbitMQ`, `redis`, `postgres`, `k8s-config` |
-| **Plataforma** | `.github` (você está aqui) |
+| `auth-service` | OAuth Google, ASP.NET Identity, emissão/refresh de JWT |
+| `user-service` | Perfis de usuário e completude de cadastro (publica eventos no RabbitMQ) |
+| `doctor-service` | Médicos, especialidades e fluxo de aprovação |
+| `patient-service` | Perfil clínico do paciente (LGPD-sensitive) |
+| `emr-service` | Prontuário Eletrônico do Paciente (LGPD-sensitive) |
+| `call-service` | Ciclo de vida de teleconsulta e metadados de salas Jitsi |
+| `payment-service` | Cartões, pagamentos e webhooks Asaas |
+| `princing-service` | Pricing dinâmico de teleconsulta (com Redis) |
 
-## ⚙️ Este repositório (`.github`)
+### Frontend
+| Repo | Stack |
+|---|---|
+| `doutoron-app` | Ionic 8 + React 19 + Vite + Capacitor 7 (PWA + iOS + Android) |
 
-Centraliza **engenharia de plataforma** e **DevSecOps** da org:
+### Infraestrutura
+| Repo | Função |
+|---|---|
+| `jitsi-private` | Servidor Jitsi self-hosted (Helm) para teleconsultas |
+| `RabbitMQ` | Broker de eventos entre microsserviços |
+| `redis` | Cache distribuído (pricing, sessões, rate limiting) |
+| `postgres` | Banco relacional (um schema por serviço) |
+| `k8s-config` | Manifestos Kubernetes compartilhados (Kustomize) |
 
-- 🔁 **Reusable workflows** chamados por todos os repos
-- 🧱 **Composite actions** (planejado)
-- 📐 **Templates** de issues, PRs e workflows (planejado)
-
-> Mude aqui, propaga para todos os repos. Sem duplicação, sem drift.
-
-### 🧩 Reusable workflows disponíveis
-
-Chame em qualquer repo via `uses: Healsyn/.github/.github/workflows/<arquivo>@main`.
-
-| Workflow | Stack | Função |
-|---|---|---|
-| `_dotnet-quality-gate.yml` | .NET 10 | Build + Test + (opt) Format check |
-| `_dotnet-security-gate.yml` | .NET 10 | GitLeaks + Semgrep + Trivy + Dependabot vuln check |
-
-#### Exemplo (`<microservice>/.github/workflows/ci.yml`)
-```yaml
-name: 🔄 CI - Quality Gate
-on:
-  pull_request:
-    branches: [main, develop]
-  workflow_call:
-
-jobs:
-  ci:
-    uses: Healsyn/.github/.github/workflows/_dotnet-quality-gate.yml@main
-    with:
-      solution-file: AuthService.sln
-      dotnet-version: '10.0.x'
-```
-
-```yaml
-name: 🔒 Security Gate
-on:
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: '0 6 * * *'
-  workflow_call:
-
-jobs:
-  security:
-    uses: Healsyn/.github/.github/workflows/_dotnet-security-gate.yml@main
-    with:
-      service-name: auth-service
-      solution-file: AuthService.sln
-    secrets: inherit
-```
-
-## 🛣️ Roadmap de Plataforma
-
-- [x] **Wave 1** — Reusable workflows .NET (Quality + Security Gate)
-- [ ] **Wave 2** — `_node-quality-gate`, `_node-security-gate` para `doutoron-app`
-- [ ] **Wave 2** — `_helm-package` (charts) e `_k8s-validate` (manifests)
-- [ ] **Wave 2** — Composite actions: SBOM (Syft), assinatura (Cosign keyless OIDC), SLSA provenance
-- [ ] **Wave 3** — Backstage + Software Templates (scaffolder de novos serviços)
-- [ ] **Wave 3** — Org rulesets + required workflows + SLSA Level 3
-
-## 📝 Convenções
-
-- **Versionamento**: workflows referenciados como `@main` por enquanto. Adotaremos `@v1` (com tags semver) quando estabilizar.
-- **Secrets**: callers passam `secrets: inherit` para herdar `GITLEAKS_LICENSE`, registry tokens etc da org.
-- **Idioma**: copy/comments/commits em **pt-BR** (Conventional Commits).
-- **LGPD**: nunca logar dado de paciente, EMR, cartão, JWT ou tokens de Jitsi.
+### Tecnologias-chave
+- **Linguagem backend**: C# / .NET 10
+- **Linguagem frontend**: TypeScript / React 19
+- **Mobile**: Capacitor 7 (iOS + Android nativo a partir do mesmo código web)
+- **Vídeo**: Jitsi Meet self-hosted
+- **Mensageria**: RabbitMQ (eventos `user.medico.created`, `user.patient.created`, `PriceQuotedEvent`...)
+- **Cache**: Redis
+- **Banco de dados**: PostgreSQL (um DB por microsserviço)
+- **Pagamentos**: Asaas (cartão, Pix, boleto)
+- **IA**: Google Gemini (transcrição de consultas)
+- **Orquestração**: Kubernetes (manifests via Kustomize, charts via Helm)
+- **CI/CD**: GitHub Actions com reusable workflows centralizados aqui no `.github`
+- **Segurança**: Semgrep (SAST), Trivy (container), GitLeaks (secrets), Dependabot (deps)
 
 ---
 
