@@ -31,7 +31,11 @@ on:
 jobs:
   secret-detection:
     name: 🔑 Secret Detection
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v5
@@ -47,7 +51,11 @@ jobs:
 
   semgrep:
     name: 🔍 Semgrep SAST/SCA
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     permissions:
       security-events: write
       contents: read
@@ -85,7 +93,11 @@ jobs:
 
   container-scan:
     name: 🐳 Container Scan
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     permissions:
       security-events: write
       contents: read
@@ -124,7 +136,11 @@ jobs:
 
   dependency-scan:
     name: 📦 Dependency Scan
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v5
@@ -149,7 +165,11 @@ jobs:
 
   security-gate:
     name: 🔒 Security Gate
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     needs: [secret-detection, semgrep, container-scan, dependency-scan]
     if: always()
     steps:
