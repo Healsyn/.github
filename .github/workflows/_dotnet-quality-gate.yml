@@ -1,0 +1,94 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# REUSABLE WORKFLOW: .NET Quality Gate
+# Build + Test (+ optional lint) para qualquer microsserviço .NET da org Healsyn.
+# ═══════════════════════════════════════════════════════════════════════════════
+name: 🔄 .NET Quality Gate (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      dotnet-version:
+        description: "Versão do .NET SDK (ex: '10.0.x')"
+        type: string
+        default: '10.0.x'
+      solution-file:
+        description: "Caminho do .sln ou .csproj a ser buildado"
+        type: string
+        required: true
+      run-format-check:
+        description: "Rodar 'dotnet format --verify-no-changes'"
+        type: boolean
+        default: false
+      configuration:
+        description: "Build configuration"
+        type: string
+        default: 'Release'
+
+jobs:
+  build-and-test:
+    name: 🏗️ Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v5
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+
+      - name: 📦 Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: 📥 Restore dependencies
+        run: dotnet restore ${{ inputs.solution-file }}
+
+      - name: 🏗️ Build
+        run: dotnet build ${{ inputs.solution-file }} --no-restore --configuration ${{ inputs.configuration }}
+
+      - name: 🧪 Run Unit Tests
+        run: dotnet test ${{ inputs.solution-file }} --no-build --configuration ${{ inputs.configuration }} --verbosity normal
+
+  linting:
+    name: 🔍 Linting
+    if: ${{ inputs.run-format-check }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v5
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+
+      - name: 📥 Restore dependencies
+        run: dotnet restore ${{ inputs.solution-file }}
+
+      - name: 🔍 Run .NET Format Check
+        run: |
+          dotnet format ${{ inputs.solution-file }} --verify-no-changes --verbosity diagnostic || {
+            echo "::warning::Code formatting issues detected. Run 'dotnet format' locally."
+          }
+        continue-on-error: true
+
+  quality-gate:
+    name: ✅ Quality Gate
+    runs-on: ubuntu-latest
+    needs: [build-and-test, linting]
+    if: always()
+    steps:
+      - name: 📊 Check Quality Gate Status
+        run: |
+          echo "📊 Quality Gate Results:"
+          echo "  Build & Test: ${{ needs.build-and-test.result }}"
+          echo "  Linting:      ${{ needs.linting.result }}"
+          if [ "${{ needs.build-and-test.result }}" != "success" ]; then
+            echo "❌ Build and Tests failed"
+            exit 1
+          fi
+          echo "✅ Quality Gate passed!"
