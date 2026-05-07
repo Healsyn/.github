@@ -26,7 +26,7 @@ on:
         default: '1.161.0'
       trivy-version:
         type: string
-        default: '0.36.0'
+        default: 'v0.36.0'
 
 jobs:
   secret-detection:
@@ -96,7 +96,7 @@ jobs:
         run: docker build -t ${{ inputs.service-name }}:scan -f ${{ inputs.dockerfile }} .
 
       - name: 🔍 Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ inputs.service-name }}:scan
           format: 'table'
