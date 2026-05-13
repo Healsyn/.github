@@ -27,7 +27,11 @@ on:
 jobs:
   build-and-test:
     name: 🏗️ Build & Test
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v5
@@ -56,7 +60,11 @@ jobs:
   linting:
     name: 🔍 Linting
     if: ${{ inputs.run-format-check }}
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v5
@@ -78,7 +86,11 @@ jobs:
 
   quality-gate:
     name: ✅ Quality Gate
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - org
+      - k8s
+      - linux
     needs: [build-and-test, linting]
     if: always()
     steps:
