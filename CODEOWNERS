@@ -19,11 +19,10 @@
 # Dono do CODEOWNERS é o time @Healsyn/sq-infra, não uma pessoa isolada
 # (achado F2 da revisão de segurança de 2026-07-31): um único Code Owner
 # nunca aprova o próprio PR, o que forçaria bypass em toda mudança de rotina
-# e inviabilizaria a exigência de ≥2 aprovações. ATENÇÃO — pendência
-# conhecida: em 2026-07-31 o time @Healsyn/sq-infra tinha só 1 membro
-# (@almirjuniordev), o que ainda não resolve o problema na prática. F2 só
-# fecha de fato quando o time tiver ≥2 membros com write access no
-# repositório — ver RELEASING.md.
+# e inviabilizaria a exigência de ≥2 aprovações. F2 FECHADO em 2026-07-31:
+# @Healsyn/sq-infra tem 2 membros com write access neste repositório
+# (@almirjuniordev, @afernandes97) — um consegue aprovar PR do outro sem
+# depender de bypass.
 #
 # O GitHub só lê UM arquivo CODEOWNERS por vez, escolhido por precedência
 # entre três locais válidos: .github/, raiz e docs/ (nesta ordem). Sem

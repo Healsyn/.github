@@ -23,16 +23,14 @@ mesclado por push direto ou force-push.
   confirmada por segundo canal.
 - **SLA:** best-effort até um valor numérico formal ser decidido e registrado aqui.
   Não bloqueia nenhuma fase de iniciativas em andamento.
-- **F2 — pendência ainda EM ABERTO (revisão de segurança, 2026-07-31):** um
-  único Code Owner nunca aprova o próprio PR, o que forçaria bypass em toda
-  mudança de rotina e inviabiliza a exigência de ≥2 aprovações. Migrar o dono
-  para o time `@Healsyn/sq-infra` resolve o problema **apenas quando o time
-  tiver ≥2 membros com write access** neste repositório. Em 2026-07-31,
-  `sq-infra` tinha só 1 membro (@almirjuniordev) — F2 continua aberto até um
-  segundo membro (ex.: @afernandes97, já admin do repositório) ser adicionado
-  ao time na UI do GitHub (`Organization → Teams → sq-infra → Members`). Sem
-  isso, o uso do bypass do dono em PRs de rotina permanece necessário e deve
-  ser tratado como risco residual documentado, não como controle efetivo.
+- **F2 — FECHADO (revisão de segurança, 2026-07-31):** um único Code Owner
+  nunca aprova o próprio PR, o que forçaria bypass em toda mudança de rotina
+  e inviabilizaria a exigência de ≥2 aprovações. Migrado o dono para o time
+  `@Healsyn/sq-infra`, agora com **2 membros com write access** neste
+  repositório (@almirjuniordev, @afernandes97 — este último já era admin do
+  `Healsyn/.github`, nenhum acesso novo foi concedido). PRs de rotina de
+  qualquer um dos dois já têm um segundo revisor real, sem depender de
+  bypass.
 
 ## Corte de tag (`v*`)
 
