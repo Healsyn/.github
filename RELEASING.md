@@ -9,10 +9,21 @@ público da organização.
 Todo Pull Request que toque em `.github/workflows/**`, `.github/dependabot.yml`,
 `/CODEOWNERS`, `.github/CODEOWNERS`, `docs/CODEOWNERS` ou este arquivo
 (`RELEASING.md`) é tratado como perfil **`critical`** (ver
-`automation/profiles.yaml` em `engineering-control-plane`): exige **≥2 revisões
-aprovadoras**, sendo pelo menos uma de Code Owner (branch protection/Ruleset de
-`main` com "Require review from Code Owners" habilitado), e não pode ser
-mesclado por push direto ou force-push.
+`automation/profiles.yaml` em `engineering-control-plane`): deve exigir **≥2
+revisões aprovadoras**, sendo pelo menos uma de Code Owner, e não deve poder
+ser mesclado por push direto ou force-push.
+
+**⚠️ Status da aplicação técnica (2026-08-01): ADIADO, não configurado.** O
+Ruleset de proteção de `main` que faria o GitHub aplicar (não só documentar)
+as regras acima **ainda não existe**. Por decisão explícita do usuário
+("deixe essas rulesets pra depois"), a criação do Ruleset de `main` e do
+Ruleset de tags `v*` (ver seção seguinte) foi adiada — não é uma tarefa
+esquecida, é um risco aceito conscientemente por enquanto. Enquanto isso:
+push direto e merge sem revisão em `main` continuam **tecnicamente possíveis**
+para qualquer colaborador com write access; este documento e o CODEOWNERS
+funcionam apenas como convenção, não como controle técnico. Não presumir
+proteção de `main` em nenhuma outra decisão (ex.: Fase 1 de DEM-0003) sem
+verificar primeiro se o Ruleset já existe.
 
 ## Dono e SLA
 
@@ -34,12 +45,15 @@ mesclado por push direto ou force-push.
 
 ## Corte de tag (`v*`)
 
-**Status da configuração (2026-07-31): pendente.** O Ruleset de tags para `v*`
-bloqueando `update` e `delete` por qualquer ator ainda precisa ser criado na UI
-do GitHub (Settings → Rules → Rulesets → New tag ruleset) — esta seção descreve
-o comportamento pretendido, não um estado já em vigor. Atualizar esta nota para
-"em vigor" assim que o Ruleset for criado e confirmado (`git push --delete` de
-uma tag de teste `v*` deve ser rejeitado).
+**Status da configuração (2026-08-01): adiado por decisão do usuário**, mesmo
+adiamento registrado na seção "Perfil de mudança" acima. O Ruleset de tags
+para `v*` bloqueando `update` e `delete` por qualquer ator ainda precisa ser
+criado na UI do GitHub (Settings → Rules → Rulesets → New tag ruleset) — esta
+seção descreve o comportamento pretendido, não um estado já em vigor. Até lá,
+`update`/`delete` de qualquer tag `v*` são **tecnicamente possíveis** para
+quem tiver write access — o processo abaixo é a única salvaguarda. Atualizar
+esta nota para "em vigor" assim que o Ruleset for criado e confirmado
+(`git push --delete` de uma tag de teste `v*` deve ser rejeitado).
 
 Por processo (enquanto o bloqueio de `criação` por identidade nomeada estiver
 adiado — ver seção seguinte), uma tag só deve ser cortada quando:
