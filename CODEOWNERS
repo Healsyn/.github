@@ -1,0 +1,17 @@
+# CODEOWNERS — Healsyn/.github
+#
+# Este repositório hospeda workflows reusáveis consumidos por 9+ pipelines de
+# produção da Healsyn, além do perfil público da organização. Qualquer PR que
+# toque nos caminhos abaixo é tratado como perfil `critical`
+# (ver automation/profiles.yaml em engineering-control-plane) e exige
+# aprovação de Code Owner — branch protection de `main` tem
+# "Require review from Code Owners" habilitado, sem o qual esta lista seria
+# apenas decorativa.
+#
+# Dono/SLA nomeado (2026-07-31): @almirjuniordev — best-effort até um SLA
+# numérico formal ser registrado.
+
+/.github/workflows/   @almirjuniordev
+/.github/dependabot.yml   @almirjuniordev
+/CODEOWNERS   @almirjuniordev
+/RELEASING.md   @almirjuniordev
