@@ -16,16 +16,23 @@ mesclado por push direto ou force-push.
 
 ## Dono e SLA
 
-- **Dono nomeado (2026-07-31):** @almirjuniordev (mapeado a "Junior Fagundes",
-  decisão registrada em `engineering-control-plane` — mesma pessoa assumida,
-  não confirmada por segundo canal).
+- **Dono nomeado (2026-07-31):** squad **@Healsyn/sq-infra** (decisão explícita
+  do usuário, em resposta ao achado F2 da revisão de segurança — ver abaixo).
+  Membro fundador: @almirjuniordev, mapeado a "Junior Fagundes", decisão
+  registrada em `engineering-control-plane` — mesma pessoa assumida, não
+  confirmada por segundo canal.
 - **SLA:** best-effort até um valor numérico formal ser decidido e registrado aqui.
   Não bloqueia nenhuma fase de iniciativas em andamento.
-- **Pendência aberta (revisão de segurança, 2026-07-31):** um único Code Owner
-  não consegue aprovar o próprio PR, o que forçaria bypass em toda mudança de
-  rotina do dono e inviabiliza a exigência de ≥2 aprovações. Falta nomear um
-  segundo Code Owner (ou um time) antes de considerar a Fase 0 concluída —
-  aguardando decisão de quem.
+- **F2 — pendência ainda EM ABERTO (revisão de segurança, 2026-07-31):** um
+  único Code Owner nunca aprova o próprio PR, o que forçaria bypass em toda
+  mudança de rotina e inviabiliza a exigência de ≥2 aprovações. Migrar o dono
+  para o time `@Healsyn/sq-infra` resolve o problema **apenas quando o time
+  tiver ≥2 membros com write access** neste repositório. Em 2026-07-31,
+  `sq-infra` tinha só 1 membro (@almirjuniordev) — F2 continua aberto até um
+  segundo membro (ex.: @afernandes97, já admin do repositório) ser adicionado
+  ao time na UI do GitHub (`Organization → Teams → sq-infra → Members`). Sem
+  isso, o uso do bypass do dono em PRs de rotina permanece necessário e deve
+  ser tratado como risco residual documentado, não como controle efetivo.
 
 ## Corte de tag (`v*`)
 

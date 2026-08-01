@@ -8,13 +8,22 @@
 # "Require review from Code Owners" habilitado, sem o qual esta lista seria
 # apenas decorativa.
 #
-# Dono/SLA nomeado (2026-07-31): @almirjuniordev — best-effort até um SLA
-# numérico formal ser registrado. Mapeamento de identidade: a decisão do
+# Dono/SLA nomeado (2026-07-31): squad @Healsyn/sq-infra — best-effort até um
+# SLA numérico formal ser registrado. Mapeamento de identidade: a decisão do
 # usuário em engineering-control-plane nomeia "Junior Fagundes"
 # (junior.fagundes7@gmail.com) como dono; @almirjuniordev é o handle do
 # GitHub com acesso admin verificado neste repositório na mesma sessão em
 # que a decisão foi tomada — assumido como a mesma pessoa (não confirmado
 # por um segundo canal).
+#
+# Dono do CODEOWNERS é o time @Healsyn/sq-infra, não uma pessoa isolada
+# (achado F2 da revisão de segurança de 2026-07-31): um único Code Owner
+# nunca aprova o próprio PR, o que forçaria bypass em toda mudança de rotina
+# e inviabilizaria a exigência de ≥2 aprovações. ATENÇÃO — pendência
+# conhecida: em 2026-07-31 o time @Healsyn/sq-infra tinha só 1 membro
+# (@almirjuniordev), o que ainda não resolve o problema na prática. F2 só
+# fecha de fato quando o time tiver ≥2 membros com write access no
+# repositório — ver RELEASING.md.
 #
 # O GitHub só lê UM arquivo CODEOWNERS por vez, escolhido por precedência
 # entre três locais válidos: .github/, raiz e docs/ (nesta ordem). Sem
@@ -24,9 +33,9 @@
 # a lista abaixo. Por isso os três locais têm dono explícito, mesmo só um
 # existindo hoje.
 
-/.github/workflows/   @almirjuniordev
-/.github/dependabot.yml   @almirjuniordev
-/.github/CODEOWNERS   @almirjuniordev
-/CODEOWNERS   @almirjuniordev
-/docs/CODEOWNERS   @almirjuniordev
-/RELEASING.md   @almirjuniordev
+/.github/workflows/   @Healsyn/sq-infra
+/.github/dependabot.yml   @Healsyn/sq-infra
+/.github/CODEOWNERS   @Healsyn/sq-infra
+/CODEOWNERS   @Healsyn/sq-infra
+/docs/CODEOWNERS   @Healsyn/sq-infra
+/RELEASING.md   @Healsyn/sq-infra
