@@ -7,20 +7,34 @@ público da organização.
 ## Perfil de mudança
 
 Todo Pull Request que toque em `.github/workflows/**`, `.github/dependabot.yml`,
-`/CODEOWNERS` ou este arquivo (`RELEASING.md`) é tratado como perfil **`critical`**
-(ver `automation/profiles.yaml` em `engineering-control-plane`): exige revisão de
-Code Owner (branch protection de `main` tem "Require review from Code Owners"
-habilitado) e não pode ser mesclado por push direto ou force-push.
+`/CODEOWNERS`, `.github/CODEOWNERS`, `docs/CODEOWNERS` ou este arquivo
+(`RELEASING.md`) é tratado como perfil **`critical`** (ver
+`automation/profiles.yaml` em `engineering-control-plane`): exige **≥2 revisões
+aprovadoras**, sendo pelo menos uma de Code Owner (branch protection/Ruleset de
+`main` com "Require review from Code Owners" habilitado), e não pode ser
+mesclado por push direto ou force-push.
 
 ## Dono e SLA
 
-- **Dono nomeado (2026-07-31):** @almirjuniordev.
+- **Dono nomeado (2026-07-31):** @almirjuniordev (mapeado a "Junior Fagundes",
+  decisão registrada em `engineering-control-plane` — mesma pessoa assumida,
+  não confirmada por segundo canal).
 - **SLA:** best-effort até um valor numérico formal ser decidido e registrado aqui.
   Não bloqueia nenhuma fase de iniciativas em andamento.
+- **Pendência aberta (revisão de segurança, 2026-07-31):** um único Code Owner
+  não consegue aprovar o próprio PR, o que forçaria bypass em toda mudança de
+  rotina do dono e inviabiliza a exigência de ≥2 aprovações. Falta nomear um
+  segundo Code Owner (ou um time) antes de considerar a Fase 0 concluída —
+  aguardando decisão de quem.
 
 ## Corte de tag (`v*`)
 
-O Ruleset de tags cobre `v*` e bloqueia `update` e `delete` por qualquer ator.
+**Status da configuração (2026-07-31): pendente.** O Ruleset de tags para `v*`
+bloqueando `update` e `delete` por qualquer ator ainda precisa ser criado na UI
+do GitHub (Settings → Rules → Rulesets → New tag ruleset) — esta seção descreve
+o comportamento pretendido, não um estado já em vigor. Atualizar esta nota para
+"em vigor" assim que o Ruleset for criado e confirmado (`git push --delete` de
+uma tag de teste `v*` deve ser rejeitado).
 
 Por processo (enquanto o bloqueio de `criação` por identidade nomeada estiver
 adiado — ver seção seguinte), uma tag só deve ser cortada quando:
@@ -37,10 +51,13 @@ Nunca cortar uma tag a partir de um SHA fora de `main` ou sem essa evidência.
 
 O Ruleset de tags ainda **não** restringe quem pode *criar* uma tag `v*` a uma
 identidade nomeada. Esta é uma decisão explícita e registrada do responsável pelo
-repositório (não uma omissão): a identidade de release será nomeada antes do
-próximo corte de tag que dependa dela. Até lá, o processo acima (item anterior)
-é a única salvaguarda para criação de tags, e é responsabilidade de quem cortar a
-tag segui-lo integralmente.
+repositório (não uma omissão): a identidade de release será nomeada e o Ruleset
+completado com o bloqueio de criação **antes de abrir a Fase 3 / `TASK-003`**
+(corte da tag `v1.0.0`) da iniciativa DEM-0003 — não "antes do próximo corte de
+tag" de forma genérica, para não deixar margem a interpretar que algum corte
+futuro poderia prosseguir sem essa decisão. Até lá, o processo acima (item
+anterior) é a única salvaguarda para criação de tags, e é responsabilidade de
+quem cortar a tag segui-lo integralmente.
 
 ## Isolamento do runner self-hosted contra fork PRs
 
@@ -53,3 +70,10 @@ sem aprovação assim que tivesse qualquer PR anterior mergeado).
 Esta configuração **não pode regredir** para "first-time contributors" ou para
 "never require approval" sem revisão do DevSecOps Lead — o runner é self-hosted e
 este repositório é público.
+
+## Follow-up registrado (fora do escopo da Fase 0 de DEM-0003)
+
+`profile/README.md` (perfil público da organização) não está coberto pelo
+CODEOWNERS. É a vitrine pública da Healsyn e alvo plausível de defacement, mas
+os critérios de aceite 8–11 da Fase 0 de DEM-0003 não o exigem. Considerar
+adicionar `/profile/ @almirjuniordev` em um follow-up.

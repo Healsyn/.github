@@ -9,9 +9,24 @@
 # apenas decorativa.
 #
 # Dono/SLA nomeado (2026-07-31): @almirjuniordev — best-effort até um SLA
-# numérico formal ser registrado.
+# numérico formal ser registrado. Mapeamento de identidade: a decisão do
+# usuário em engineering-control-plane nomeia "Junior Fagundes"
+# (junior.fagundes7@gmail.com) como dono; @almirjuniordev é o handle do
+# GitHub com acesso admin verificado neste repositório na mesma sessão em
+# que a decisão foi tomada — assumido como a mesma pessoa (não confirmado
+# por um segundo canal).
+#
+# O GitHub só lê UM arquivo CODEOWNERS por vez, escolhido por precedência
+# entre três locais válidos: .github/, raiz e docs/ (nesta ordem). Sem
+# regra própria para os três, um PR que crie .github/CODEOWNERS ou
+# docs/CODEOWNERS não exigiria revisão de dono e, uma vez mesclado, esse
+# arquivo passaria a ter precedência sobre este — sombreando/anulando toda
+# a lista abaixo. Por isso os três locais têm dono explícito, mesmo só um
+# existindo hoje.
 
 /.github/workflows/   @almirjuniordev
 /.github/dependabot.yml   @almirjuniordev
+/.github/CODEOWNERS   @almirjuniordev
 /CODEOWNERS   @almirjuniordev
+/docs/CODEOWNERS   @almirjuniordev
 /RELEASING.md   @almirjuniordev
