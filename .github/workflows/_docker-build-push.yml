@@ -1,0 +1,114 @@
+name: 🐳 Docker Build & Push (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      dockerfile:
+        description: "Caminho do Dockerfile"
+        type: string
+        default: "Dockerfile"
+      context:
+        description: "Contexto de build"
+        type: string
+        default: "."
+      # Nenhum input de nome de imagem. github.repository é a única fonte, sempre.
+      # Removido após as revisões de segurança (N4) e arquitetura (C1) concluírem,
+      # cada uma de forma independente, que reaproveitar o nome `service-name` do
+      # _dotnet-security-gate.yml (onde é tag LOCAL de imagem para scan, nunca
+      # caminho de registry) criava um input cuja própria descrição instruía um
+      # valor que quebra a composição ghcr.io/<valor>. Nenhum dos 9 repos precisa
+      # de um nome diferente do próprio repositório — contrato de configuração
+      # zero, sem exceção.
+    outputs:
+      image-tags:
+        description: "Tags publicadas (lista multilinha, fiel a steps.meta.outputs.tags)"
+        value: ${{ jobs.build-and-push.outputs.image-tags }}
+      image-digest:
+        description: "Digest imutável (sha256:...)"
+        value: ${{ jobs.build-and-push.outputs.image-digest }}
+      image-ref:
+        description: "Referência imutável completa ghcr.io/<owner>/<repo>@sha256:..."
+        value: ${{ jobs.build-and-push.outputs.image-ref }}
+
+jobs:
+  build-and-push:
+    name: 🐳 Build & Push Image
+    runs-on: [self-hosted, org, k8s, linux]     # fixo — nunca input
+    timeout-minutes: 30                          # build travado não ocupa o runner até o limite padrão de 6h (R6)
+    concurrency:
+      group: docker-build-push-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: false                  # evita corrida de dois pushes concorrentes em main (R6/R3 seg.)
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tags: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-ref: ${{ steps.ref.outputs.value }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}   # automático — nenhum secret custom
+
+      - id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          # github.repository resolve para o repositório CHAMADOR dentro de um
+          # workflow chamado. metadata-action minuscula automaticamente.
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+
+      - id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - id: ref
+        shell: bash            # ${REPO,,} depende de expansão bash 4+ (D5 rodada 3 arquitetura) — não deixar ao default implícito
+        env:
+          # env: em vez de interpolação direta ${{ }} na linha do shell — defense-in-depth (N6)
+          REPO: ${{ github.repository }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          echo "value=ghcr.io/${REPO,,}@${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: 📊 Registrar versão do workflow executado
+        shell: bash
+        env:
+          # mesmo env: binding do step `ref` — não reintroduzir ${{ }} na linha
+          # do run: (achado N9 da rodada 3 de segurança, corrigido).
+          # github.job_workflow_sha, não github.workflow_ref (achado D1 da rodada 3
+          # de arquitetura): dentro de um workflow chamado, o contexto `github` é o
+          # do CHAMADOR — workflow_ref sempre resolveria para o deploy.yml de cada
+          # repo, nunca para este reusável, tornando o campo enganoso justamente no
+          # momento de incidente que ele existe para esclarecer.
+          REUSABLE_SHA: ${{ github.job_workflow_sha }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}   # sempre multilinha (branch+sha = 2 linhas garantidas)
+        run: |
+          {
+            echo "### 🐳 Docker Build & Push"
+            echo "- Workflow reusável (SHA): \`${REUSABLE_SHA}\`"
+            echo "- Digest: \`${DIGEST}\`"
+            echo "- Tags publicadas:"
+            echo '```'
+            # bloco de código, não crase inline (D5): crase inline com valor
+            # multilinha quebra o markdown do summary em toda execução, não só
+            # em caso de borda.
+            echo "${TAGS}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
