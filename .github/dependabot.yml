@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Monitora as actions de terceiros fixadas por SHA dentro dos workflows
+  # reusáveis deste repositório (ex.: actions/checkout, docker/* em
+  # _docker-build-push.yml). Propósito distinto do dependabot.yml que cada um
+  # dos 8 repos consumidores recebe na Fase 3 de DEM-0003 — aquele monitora a
+  # referência a este repositório (Healsyn/.github) como workflow reusável;
+  # este aqui monitora as dependências de terceiros usadas dentro dele.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
