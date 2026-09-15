@@ -2,6 +2,11 @@
 # REUSABLE WORKFLOW: .NET Security Gate
 # Multi-camadas: Secret Detection (GitLeaks) + SAST/SCA (Semgrep) +
 # Container Scan (Trivy) + Dependency Vuln Check (dotnet list package).
+#
+# Política fail-closed (P0-4): GitLeaks e Semgrep são bloqueantes. O job
+# security-gate falha se secret-detection, semgrep ou container-scan != success.
+# Soft (intencional, documentado): upload SARIF; findings Trivy (exit-code 0);
+# dependency-scan (warning). Não reintroduzir continue-on-error nos scans.
 # ═══════════════════════════════════════════════════════════════════════════════
 name: 🔒 .NET Security Gate (reusable)
 
@@ -27,6 +32,13 @@ on:
       trivy-version:
         type: string
         default: 'v0.36.0'
+    secrets:
+      GITLEAKS_LICENSE:
+        required: false
+        description: >
+          Licença GitLeaks (secret de org/repo; nunca no git). Chamadores
+          devem passar via secrets: inherit. Sem a licença em organização
+          GitHub, o action falha e o gate bloqueia (fail-closed).
 
 jobs:
   secret-detection:
@@ -47,7 +59,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-        continue-on-error: true
 
   semgrep:
     name: 🔍 Semgrep SAST/SCA
@@ -81,7 +92,6 @@ jobs:
             --error
             --severity=ERROR
             --severity=WARNING
-        continue-on-error: true
 
       - name: 📤 Upload Semgrep SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
@@ -89,6 +99,8 @@ jobs:
         with:
           sarif_file: semgrep.sarif
           category: semgrep
+        # Soft intencional: reporting. GHAS/Code Scanning pode estar
+        # indisponível no repo chamador; não mascara o resultado do scan.
         continue-on-error: true
 
   container-scan:
@@ -123,6 +135,7 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
           category: trivy-container
+        # Soft intencional: reporting. Mesma política do upload Semgrep.
         continue-on-error: true
 
       - name: 📊 Run Trivy (table summary in logs)
@@ -130,6 +143,9 @@ jobs:
         with:
           image-ref: ${{ inputs.service-name }}:scan
           format: 'table'
+          # Soft intencional: findings CRITICAL/HIGH não falham o step.
+          # Falha de build Docker ou do scanner (action) continua bloqueante.
+          # Promover para exit-code 1 exige baseline/ignore por serviço.
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: false
@@ -158,7 +174,7 @@ jobs:
           echo "🔍 Checking for vulnerable packages..."
           dotnet list ${{ inputs.solution-file }} package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
           if grep -q "has the following vulnerable packages" vulnerability-report.txt; then
-            echo "::warning::Vulnerable packages detected"
+            echo "::warning::Vulnerable packages detected (advisory; não bloqueia o security-gate)"
           else
             echo "✅ No vulnerable packages found"
           fi
@@ -174,14 +190,31 @@ jobs:
     if: always()
     steps:
       - name: 🔒 Check Security Gate Status
+        env:
+          SECRET_DETECTION: ${{ needs.secret-detection.result }}
+          SEMGREP: ${{ needs.semgrep.result }}
+          CONTAINER_SCAN: ${{ needs.container-scan.result }}
+          DEPENDENCY_SCAN: ${{ needs.dependency-scan.result }}
         run: |
           echo "🔒 Security Gate Results:"
-          echo "  Secret Detection: ${{ needs.secret-detection.result }}"
-          echo "  Semgrep:          ${{ needs.semgrep.result }}"
-          echo "  Container Scan:   ${{ needs.container-scan.result }}"
-          echo "  Dependency Scan:  ${{ needs.dependency-scan.result }}"
-          if [ "${{ needs.container-scan.result }}" != "success" ]; then
-            echo "❌ Container Scan failed (build error or critical vulns)"
+          echo "  Secret Detection: ${SECRET_DETECTION} (bloqueante)"
+          echo "  Semgrep:          ${SEMGREP} (bloqueante)"
+          echo "  Container Scan:   ${CONTAINER_SCAN} (bloqueante: build/scanner)"
+          echo "  Dependency Scan:  ${DEPENDENCY_SCAN} (advisory; não bloqueia)"
+          failed=0
+          if [ "${SECRET_DETECTION}" != "success" ]; then
+            echo "❌ Secret Detection failed (GitLeaks)"
+            failed=1
+          fi
+          if [ "${SEMGREP}" != "success" ]; then
+            echo "❌ Semgrep SAST/SCA failed"
+            failed=1
+          fi
+          if [ "${CONTAINER_SCAN}" != "success" ]; then
+            echo "❌ Container Scan failed (build error or scanner failure)"
+            failed=1
+          fi
+          if [ "${failed}" -ne 0 ]; then
             exit 1
           fi
           echo "✅ Security Gate passed!"
