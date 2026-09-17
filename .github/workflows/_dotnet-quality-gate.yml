@@ -4,6 +4,12 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 name: 🔄 .NET Quality Gate (reusable)
 
+# Cada serviço mantém somente a validação mais recente da mesma branch. O
+# prefixo exclusivo deste workflow evita cancelar o Security Gate paralelo.
+concurrency:
+  group: dotnet-quality-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_call:
     inputs:

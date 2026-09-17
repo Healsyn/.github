@@ -14,6 +14,12 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 name: 🔒 .NET Security Gate (reusable)
 
+# Cancela scans de commits ultrapassados do mesmo serviço/branch, sem
+# interferir no Quality Gate chamado em paralelo pelo pipeline do serviço.
+concurrency:
+  group: dotnet-security-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_call:
     inputs:
@@ -102,8 +108,21 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v7
 
+      - name: 🐳 Configure Buildx cache
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
       - name: 🐳 Build Docker image for scanning
-        run: docker build -t ${{ inputs.service-name }}:scan -f ${{ inputs.dockerfile }} .
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          load: true
+          push: false
+          tags: ${{ inputs.service-name }}:scan
+          # Reutiliza camadas entre execuções de CI do mesmo serviço e não
+          # mistura dependências entre repositórios.
+          cache-from: type=gha,scope=security-scan-${{ github.repository }}
+          cache-to: type=gha,mode=max,scope=security-scan-${{ github.repository }}
 
       - name: 🔍 Run Trivy (SARIF for Code Scanning)
         uses: aquasecurity/trivy-action@v0.36.0
@@ -150,6 +169,13 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.dotnet-version }}
+
+      - name: 📦 Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-security-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-security-
 
       - name: 📦 Restore dependencies
         run: dotnet restore ${{ inputs.solution-file }}
