@@ -22,7 +22,7 @@ on:
         type: string
         required: true
       run-format-check:
-        description: "Rodar 'dotnet format --verify-no-changes'"
+        description: "Bloquear o gate se 'dotnet format --verify-no-changes' falhar"
         type: boolean
         default: false
       configuration:
@@ -84,11 +84,7 @@ jobs:
         run: dotnet restore ${{ inputs.solution-file }}
 
       - name: 🔍 Run .NET Format Check
-        run: |
-          dotnet format ${{ inputs.solution-file }} --verify-no-changes --verbosity diagnostic || {
-            echo "::warning::Code formatting issues detected. Run 'dotnet format' locally."
-          }
-        continue-on-error: true
+        run: dotnet format ${{ inputs.solution-file }} --verify-no-changes --verbosity diagnostic
 
   quality-gate:
     name: ✅ Quality Gate
@@ -107,6 +103,10 @@ jobs:
           echo "  Linting:      ${{ needs.linting.result }}"
           if [ "${{ needs.build-and-test.result }}" != "success" ]; then
             echo "❌ Build and Tests failed"
+            exit 1
+          fi
+          if [ "${{ inputs.run-format-check }}" = "true" ] && [ "${{ needs.linting.result }}" != "success" ]; then
+            echo "❌ Linting failed"
             exit 1
           fi
           echo "✅ Quality Gate passed!"
