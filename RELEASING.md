@@ -25,6 +25,52 @@ funcionam apenas como convenção, não como controle técnico. Não presumir
 proteção de `main` em nenhuma outra decisão (ex.: Fase 1 de DEM-0003) sem
 verificar primeiro se o Ruleset já existe.
 
+## Checklist operacional para aplicar Rulesets (UI — Almir / @Healsyn/sq-infra)
+
+**Não está em vigor.** Este repositório não cria nem altera Rulesets via API
+neste PR (risco de org settings e bypass mal configurado). Quando for
+habilitar, usar a UI do GitHub (`Settings → Rules → Rulesets`) e só então
+atualizar o status acima para "em vigor".
+
+### Branch ruleset — `main`
+
+- [ ] Target: branch `main` (incluir a default branch)
+- [ ] Restrict deletions
+- [ ] Block force pushes
+- [ ] Require a pull request before merging
+- [ ] Required approvals: ≥ 2
+- [ ] Require review from Code Owners
+- [ ] Dismiss stale pull request approvals when new commits are pushed (recomendado)
+- [ ] Bypass: nenhum, ou limitado a um papel nomeado — nunca "everyone"
+- [ ] Confirmar que push direto em `main` é rejeitado
+
+### Tag ruleset — `v*`
+
+- [ ] Target: tags matching `v*`
+- [ ] Restrict updates
+- [ ] Restrict deletions
+- [ ] Restrict creations à identidade de release nomeada (antes da Fase 3 / `TASK-003`)
+- [ ] Confirmar com `git push --delete` de uma tag de teste `v*` que a exclusão é rejeitada
+
+## Security Gate reusável — política fail-closed (P0-4)
+
+O workflow `.github/workflows/_dotnet-security-gate.yml` é **fail-closed**
+para os checks críticos. Consumidores devem passar `secrets: inherit` (ou o
+secret explícito) para `GITLEAKS_LICENSE`. Esse valor vive em secret de
+org/repo — **nunca** no git.
+
+| Check | Comportamento |
+| --- | --- |
+| GitLeaks | Bloqueante. Finding ou falha do scanner falha o job e o gate. |
+| Semgrep SAST/SCA | Bloqueante (`--error` em ERROR e WARNING). |
+| Container Scan (Trivy) | Job bloqueante se o build Docker ou o scanner falhar. Findings CRITICAL/HIGH **não** falham o step (`exit-code: 0`) — tabela + SARIF apenas, até haver baseline por serviço. |
+| Dependency scan (`dotnet list package --vulnerable`) | Advisory (`::warning::`); o job pode falhar em restore, mas o gate **não** o trata como bloqueante. |
+| Upload SARIF (Semgrep / Trivy) | Soft: `continue-on-error` — Code Scanning/GHAS pode estar indisponível no repo chamador. |
+
+O job `security-gate` falha se `secret-detection`, `semgrep` ou
+`container-scan` não forem `success`. Não reintroduzir `continue-on-error`
+nos steps de scan.
+
 ## Dono e SLA
 
 - **Dono nomeado (2026-07-31):** squad **@Healsyn/sq-infra** (decisão explícita
