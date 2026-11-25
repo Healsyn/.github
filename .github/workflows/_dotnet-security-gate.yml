@@ -112,7 +112,11 @@ jobs:
         # No cluster atual, o cache remoto de BuildKit custou mais tempo de
         # transferência do que economizou. O Docker-in-Docker persistente dos
         # runners já mantém cache local entre jobs no mesmo runner.
-        run: docker build -t ${{ inputs.service-name }}:scan -f ${{ inputs.dockerfile }} .
+        # Inputs via env: evita Semgrep run-shell-injection em `${{ inputs.* }}`.
+        env:
+          SERVICE_NAME: ${{ inputs.service-name }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
+        run: docker build -t "${SERVICE_NAME}:scan" -f "$DOCKERFILE" .
 
       - name: 🔍 Run Trivy (SARIF for Code Scanning)
         uses: aquasecurity/trivy-action@v0.36.0
@@ -168,12 +172,16 @@ jobs:
           restore-keys: ${{ runner.os }}-nuget-security-
 
       - name: 📦 Restore dependencies
-        run: dotnet restore ${{ inputs.solution-file }}
+        env:
+          SOLUTION_FILE: ${{ inputs.solution-file }}
+        run: dotnet restore "$SOLUTION_FILE"
 
       - name: 🔍 Check for vulnerable packages
+        env:
+          SOLUTION_FILE: ${{ inputs.solution-file }}
         run: |
           echo "🔍 Checking for vulnerable packages..."
-          dotnet list ${{ inputs.solution-file }} package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
+          dotnet list "$SOLUTION_FILE" package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
           if grep -q "has the following vulnerable packages" vulnerability-report.txt; then
             echo "::warning::Vulnerable packages detected (advisory; não bloqueia o security-gate)"
           else
